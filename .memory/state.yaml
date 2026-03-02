@@ -69,3 +69,6 @@ sessions:
   - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-03-02T18-13-21-400Z_1924d0f0-c2a2-4d02-9f4a-39a486966c99.jsonl"
     branch: main
     started: "2026-03-02T18:13:21.414Z"
+  - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-03-02T18-18-07-474Z_81c37a08-939e-4265-a796-d4dc8645c597.jsonl"
+    branch: main
+    started: "2026-03-02T18:18:07.488Z"
