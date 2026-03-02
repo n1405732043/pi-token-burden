@@ -2,9 +2,9 @@ active_branch: main
 initialized: "2026-02-26T21:46:02Z"
 last_commit:
   branch: main
-  hash: 9848829a
-  timestamp: "2026-02-26T21:47:18.744Z"
-  summary: "GCC initialized. Authored roadmap based on project inspection — v0.1.0 extension with /context-budget command, parser/formatter/report-view architecture, full test coverage and CI tooling in place."
+  hash: 0dc586f6
+  timestamp: "2026-03-02T04:46:30.524Z"
+  summary: "Corrected stale roadmap: renamed /context-budget to /token-burden, removed phantom formatter.ts reference, updated token estimation description from char heuristic to BPE tokenization. Massive log accumulation from prior sessions with no commits — this is a housekeeping distillation."
 sessions:
   - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-02-26T21-45-50-232Z_43e18b9a-a463-42f5-a332-c6c9a28718fd.jsonl"
     branch: main
@@ -36,3 +36,21 @@ sessions:
   - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-02-27T05-19-02-158Z_5f86a6c5-3a30-4bdc-a6b0-d4f70b262fdc.jsonl"
     branch: main
     started: "2026-02-27T05:19:02.174Z"
+  - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-02-27T23-18-34-223Z_dac97c2e-7dd0-4aaa-aa22-9ab080082af2.jsonl"
+    branch: main
+    started: "2026-02-27T23:18:34.239Z"
+  - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-02-27T23-18-51-089Z_9e66499d-4005-4b7a-b8d2-b64803499bce.jsonl"
+    branch: main
+    started: "2026-02-27T23:18:51.103Z"
+  - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-02-27T23-20-47-299Z_7a1b5849-165d-459f-b2b9-8d8a3ad18fd5.jsonl"
+    branch: main
+    started: "2026-02-27T23:20:47.316Z"
+  - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-02-27T23-22-11-563Z_df1a5c46-3509-44ef-bd3c-d476b9389ba8.jsonl"
+    branch: main
+    started: "2026-02-27T23:22:11.580Z"
+  - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-03-02T04-43-20-521Z_f4859296-d614-46d3-ac48-d73b0b1ab455.jsonl"
+    branch: main
+    started: "2026-03-02T04:43:20.540Z"
+  - file: "/home/will/.pi/agent/sessions/--home-will-projects-pi-token-burden--/2026-03-02T04-46-45-395Z_a1d0a20a-bce1-44bd-b791-e22d606e68f7.jsonl"
+    branch: main
+    started: "2026-03-02T04:46:45.396Z"
