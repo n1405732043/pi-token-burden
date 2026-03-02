@@ -1,7 +1,13 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "extends": ["./node_modules/ultracite/config/oxlint/core/.oxlintrc.json"],
-  "ignorePatterns": ["docs/", "node_modules/", "vendor/", "scripts/"],
+  "ignorePatterns": [
+    "docs/",
+    "node_modules/",
+    "vendor/",
+    "scripts/",
+    ".memory/"
+  ],
   "jsPlugins": [
     { "name": "@factory", "specifier": "./vendor/factory-rules/plugin.cjs" }
   ],

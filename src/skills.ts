@@ -4,16 +4,9 @@
  * Scans the same directories pi uses to find skills, reads SKILL.md
  * frontmatter, deduplicates by name (first wins), and computes each
  * skill's disable state from settings.json + frontmatter.
- *
- * Directory scan order (matches pi's resource-loader):
- *   1. .pi/skills/         (project)
- *   2. .agents/skills/     (cwd + ancestors up to git root)
- *   3. ~/.pi/agent/skills/ (user)
- *   4. ~/.agents/skills/   (user)
- *   5. Explicit paths from settings.json skills arrays
- *   6. Paths from installed packages
  */
 
+import { spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -184,19 +177,36 @@ export function scanSkillDir(
   }
 }
 
+function scanSkillPath(
+  sourcePath: string,
+  skills: RawSkill[],
+  visitedRealPaths: Set<string>
+): void {
+  if (!fs.existsSync(sourcePath)) {
+    return;
+  }
+
+  try {
+    const stats = fs.statSync(sourcePath);
+    if (stats.isDirectory()) {
+      scanSkillDir(sourcePath, skills, visitedRealPaths);
+      return;
+    }
+
+    if (stats.isFile() && sourcePath.endsWith(".md")) {
+      loadRawSkill(sourcePath, skills, visitedRealPaths);
+    }
+  } catch {
+    // Skip inaccessible files/paths
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Token estimation for skill prompt entries
 // ---------------------------------------------------------------------------
 
 /**
  * Estimate the token cost of a skill's XML entry in the system prompt.
- *
- * Pi formats each skill as:
- *   <skill>
- *     <name>{name}</name>
- *     <description>{description}</description>
- *     <location>{filePath}</location>
- *   </skill>
  */
 export function estimateSkillPromptTokens(skill: {
   name: string;
@@ -217,8 +227,18 @@ export function estimateSkillPromptTokens(skill: {
 // Settings helpers
 // ---------------------------------------------------------------------------
 
-function normalizePath(p: string): string {
-  const trimmed = p.trim();
+function isPatternEntry(entry: string): boolean {
+  return (
+    entry.startsWith("!") ||
+    entry.startsWith("+") ||
+    entry.startsWith("-") ||
+    entry.includes("*") ||
+    entry.includes("?")
+  );
+}
+
+function resolvePathFromBase(input: string, baseDir: string): string {
+  const trimmed = input.trim();
   if (trimmed === "~") {
     return os.homedir();
   }
@@ -228,18 +248,24 @@ function normalizePath(p: string): string {
   if (trimmed.startsWith("~")) {
     return path.join(os.homedir(), trimmed.slice(1));
   }
-  return path.resolve(trimmed);
+  if (path.isAbsolute(trimmed)) {
+    return path.normalize(trimmed);
+  }
+  return path.resolve(baseDir, trimmed);
 }
 
-function getDisabledPaths(settings: Settings): Set<string> {
+function getDisabledPaths(
+  settings: Settings,
+  settingsBaseDir: string
+): Set<string> {
   const disabled = new Set<string>();
   const skills = settings.skills ?? [];
   for (const entry of skills) {
     if (typeof entry === "string" && entry.startsWith("-")) {
       const rawPath = entry.slice(1);
-      const absolutePath = normalizePath(rawPath);
-      disabled.add(absolutePath);
-      disabled.add(path.join(absolutePath, "SKILL.md"));
+      const absolutePath = resolvePathFromBase(rawPath, settingsBaseDir);
+      disabled.add(path.normalize(absolutePath));
+      disabled.add(path.normalize(path.join(absolutePath, "SKILL.md")));
     }
   }
   return disabled;
@@ -252,6 +278,270 @@ function isSkillDisabled(
   const normalized = path.normalize(filePath);
   const dir = path.dirname(filePath);
   return disabledPaths.has(normalized) || disabledPaths.has(dir);
+}
+
+function getPackageSource(entry: unknown): string | null {
+  if (typeof entry === "string") {
+    return entry;
+  }
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+
+  if (!("source" in entry)) {
+    return null;
+  }
+
+  const { source } = entry as { source?: unknown };
+  if (typeof source !== "string") {
+    return null;
+  }
+
+  return source;
+}
+
+function isLocalPathLike(source: string): boolean {
+  const trimmed = source.trim();
+  return (
+    trimmed.startsWith(".") ||
+    trimmed.startsWith("/") ||
+    trimmed === "~" ||
+    trimmed.startsWith("~/") ||
+    /^[A-Za-z]:[\\/]|^\\\\/.test(trimmed)
+  );
+}
+
+function parseNpmPackageName(spec: string): string {
+  const match = spec.match(/^(@?[^@]+(?:\/[^@]+)?)(?:@(.+))?$/);
+  if (!match) {
+    return spec;
+  }
+  return match[1] ?? spec;
+}
+
+function getGlobalNpmRoot(): string | null {
+  const result = spawnSync("npm", ["root", "-g"], {
+    encoding: "utf8",
+  });
+
+  if (result.status !== 0) {
+    return null;
+  }
+
+  const value = result.stdout.trim();
+  if (!value) {
+    return null;
+  }
+
+  return value;
+}
+
+function looksLikeGitSource(source: string): boolean {
+  return (
+    source.startsWith("git:") ||
+    source.startsWith("http://") ||
+    source.startsWith("https://") ||
+    source.startsWith("ssh://") ||
+    source.startsWith("git@")
+  );
+}
+
+function parseGitSource(
+  source: string
+): { host: string; repoPath: string } | null {
+  const trimmed = source.trim();
+  const withoutPrefix = trimmed.startsWith("git:")
+    ? trimmed.slice("git:".length)
+    : trimmed;
+  const withoutRef = withoutPrefix.split("#")[0]?.trim() ?? "";
+
+  if (!withoutRef) {
+    return null;
+  }
+
+  if (
+    withoutRef.startsWith("http://") ||
+    withoutRef.startsWith("https://") ||
+    withoutRef.startsWith("ssh://")
+  ) {
+    try {
+      const parsed = new URL(withoutRef);
+      const { host, pathname } = parsed;
+      const repoPath = pathname.replace(/^\/+/, "").replace(/\.git$/, "");
+
+      if (!host || !repoPath) {
+        return null;
+      }
+
+      return { host, repoPath };
+    } catch {
+      return null;
+    }
+  }
+
+  if (withoutRef.startsWith("git@")) {
+    const atIndex = withoutRef.indexOf("@");
+    const colonIndex = withoutRef.indexOf(":");
+    if (colonIndex === -1 || colonIndex <= atIndex) {
+      return null;
+    }
+
+    const host = withoutRef.slice(atIndex + 1, colonIndex);
+    const repoPath = withoutRef.slice(colonIndex + 1).replace(/\.git$/, "");
+
+    if (!host || !repoPath) {
+      return null;
+    }
+
+    return { host, repoPath };
+  }
+
+  const firstSlash = withoutRef.indexOf("/");
+  if (firstSlash === -1) {
+    return null;
+  }
+
+  const host = withoutRef.slice(0, firstSlash);
+  const repoPath = withoutRef.slice(firstSlash + 1).replace(/\.git$/, "");
+  if (!host || !repoPath) {
+    return null;
+  }
+
+  return { host, repoPath };
+}
+
+function resolvePackageRoot(
+  source: string,
+  settingsBaseDir: string,
+  npmRoot: string | null
+): string | null {
+  const trimmed = source.trim();
+
+  if (trimmed.startsWith("npm:")) {
+    if (!npmRoot) {
+      return null;
+    }
+    const spec = trimmed.slice("npm:".length).trim();
+    const packageName = parseNpmPackageName(spec);
+    return path.join(npmRoot, packageName);
+  }
+
+  if (looksLikeGitSource(trimmed)) {
+    const parsedGit = parseGitSource(trimmed);
+    if (!parsedGit) {
+      return null;
+    }
+    return path.join(
+      settingsBaseDir,
+      "git",
+      parsedGit.host,
+      parsedGit.repoPath
+    );
+  }
+
+  if (isLocalPathLike(trimmed)) {
+    return resolvePathFromBase(trimmed, settingsBaseDir);
+  }
+
+  // Fallback aligns with package-manager behavior for unknown sources.
+  return resolvePathFromBase(trimmed, settingsBaseDir);
+}
+
+function resolvePackageSkillPaths(packageRoot: string): string[] {
+  const packageJsonPath = path.join(packageRoot, "package.json");
+  const resolvedPaths: string[] = [];
+
+  if (fs.existsSync(packageJsonPath)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+        pi?: { skills?: unknown };
+      };
+      const manifestSkills = parsed.pi?.skills;
+
+      if (Array.isArray(manifestSkills)) {
+        const plainEntries = manifestSkills.filter(
+          (entry): entry is string =>
+            typeof entry === "string" && !isPatternEntry(entry)
+        );
+
+        for (const entry of plainEntries) {
+          resolvedPaths.push(path.resolve(packageRoot, entry));
+        }
+      }
+    } catch {
+      // Ignore invalid package.json
+    }
+  }
+
+  if (resolvedPaths.length > 0) {
+    return resolvedPaths;
+  }
+
+  const conventionalSkillsDir = path.join(packageRoot, "skills");
+  if (fs.existsSync(conventionalSkillsDir)) {
+    return [conventionalSkillsDir];
+  }
+
+  return [packageRoot];
+}
+
+function collectConfiguredSkillPaths(
+  settings: Settings,
+  settingsBaseDir: string
+): string[] {
+  const configuredPaths: string[] = [];
+
+  for (const entry of settings.skills ?? []) {
+    if (typeof entry !== "string") {
+      continue;
+    }
+
+    const trimmed = entry.trim();
+    if (!trimmed || isPatternEntry(trimmed)) {
+      continue;
+    }
+
+    configuredPaths.push(resolvePathFromBase(trimmed, settingsBaseDir));
+  }
+
+  const packageEntries = settings.packages ?? [];
+  const hasNpmPackage = packageEntries.some((entry) => {
+    const source = getPackageSource(entry);
+    return source?.startsWith("npm:") ?? false;
+  });
+  const npmRoot = hasNpmPackage ? getGlobalNpmRoot() : null;
+
+  for (const entry of packageEntries) {
+    const source = getPackageSource(entry);
+    if (!source) {
+      continue;
+    }
+
+    const packageRoot = resolvePackageRoot(source, settingsBaseDir, npmRoot);
+    if (!packageRoot) {
+      continue;
+    }
+
+    configuredPaths.push(...resolvePackageSkillPaths(packageRoot));
+  }
+
+  return configuredPaths;
+}
+
+function uniquePaths(paths: string[]): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+
+  for (const p of paths) {
+    const normalized = path.normalize(p);
+    if (seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    unique.push(p);
+  }
+
+  return unique;
 }
 
 // ---------------------------------------------------------------------------
@@ -298,31 +588,44 @@ function collectAncestorAgentsSkillDirs(startDir: string): string[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Discover all skills from the filesystem, matching pi's actual scan order.
+ * Discover all skills from the filesystem, matching pi scan order.
  *
- * Pass `overrideDirs` to scan only those directories (for testing).
- * Pass `settings` as `{}` if no settings file exists.
+ * Pass `overrideDirs` to limit default scanning (used by tests).
  */
 export function loadAllSkills(
   settings: Settings,
-  overrideDirs?: string[]
+  overrideDirs?: string[],
+  settingsBaseDir?: string
 ): { skills: SkillInfo[]; byName: Map<string, SkillInfo> } {
-  const disabledPaths = getDisabledPaths(settings);
+  const resolvedSettingsBaseDir =
+    settingsBaseDir ?? path.join(os.homedir(), ".pi", "agent");
+
+  const disabledPaths = getDisabledPaths(settings, resolvedSettingsBaseDir);
   const rawSkills: RawSkill[] = [];
   const visitedRealPaths = new Set<string>();
 
-  const scanDirs = overrideDirs ?? [
+  const defaultScanDirs = [
     path.join(process.cwd(), ".pi", "skills"),
     ...collectAncestorAgentsSkillDirs(process.cwd()),
     path.join(os.homedir(), ".pi", "agent", "skills"),
     path.join(os.homedir(), ".agents", "skills"),
   ];
 
-  for (const dir of scanDirs) {
-    scanSkillDir(dir, rawSkills, visitedRealPaths);
+  const configuredPaths = collectConfiguredSkillPaths(
+    settings,
+    resolvedSettingsBaseDir
+  );
+
+  const scanTargets = uniquePaths([
+    ...(overrideDirs ?? defaultScanDirs),
+    ...configuredPaths,
+  ]);
+
+  for (const target of scanTargets) {
+    scanSkillPath(target, rawSkills, visitedRealPaths);
   }
 
-  // Group by name — first occurrence wins
+  // Group by name — first occurrence wins.
   const byName = new Map<string, SkillInfo>();
   const pathsByName = new Map<string, string[]>();
 
@@ -345,15 +648,16 @@ export function loadAllSkills(
     }
   }
 
-  // Fill in allPaths and compute mode
+  // Fill in allPaths and compute mode.
   for (const [name, skill] of byName) {
     const allPaths = pathsByName.get(name) ?? [skill.filePath];
     skill.allPaths = allPaths;
     skill.hasDuplicates = allPaths.length > 1;
 
     const allDisabled = allPaths.every((p) =>
-      isSkillDisabled(p, disabledPaths)
+      isSkillDisabled(path.resolve(p), disabledPaths)
     );
+
     if (allDisabled) {
       skill.mode = DisableMode.Disabled;
     } else if (rawSkills.find((r) => r.name === name)?.disableModelInvocation) {

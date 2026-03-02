@@ -21,9 +21,6 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0
     devDependencies:
-      '@fast-check/vitest':
-        specifier: ^0.2.4
-        version: 0.2.4(vitest@4.0.18(@types/node@25.3.2)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       '@types/node':
         specifier: ^25.3.2
         version: 25.3.2
@@ -406,11 +403,6 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
-
-  '@fast-check/vitest@0.2.4':
-    resolution: {integrity: sha512-Ilcr+JAIPhb1s6FRm4qoglQYSGXXrS+zAupZeNuWAA3qHVGDA1d1Gb84Hb/+otL3GzVZjFJESg5/1SfIvrgssA==}
-    peerDependencies:
-      vitest: ^1 || ^2 || ^3 || ^4
 
   '@google/genai@1.43.0':
     resolution: {integrity: sha512-hklCsJNdMlDM1IwcCVcGQFBg2izY0+t5BIGbRsxi2UnKi6AGKL7pqJqmBDNRbw0bYCs4y3NA7TB+fkKfP/Nrdw==}
@@ -3240,11 +3232,6 @@ snapshots:
 
   '@esbuild/win32-x64@0.27.3':
     optional: true
-
-  '@fast-check/vitest@0.2.4(vitest@4.0.18(@types/node@25.3.2)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))':
-    dependencies:
-      fast-check: 4.5.3
-      vitest: 4.0.18(@types/node@25.3.2)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
 
   '@google/genai@1.43.0':
     dependencies:

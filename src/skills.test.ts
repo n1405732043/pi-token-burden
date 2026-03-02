@@ -13,6 +13,17 @@ import {
 } from "./skills.js";
 import type { Settings } from "./types.js";
 
+function withTemporaryHome<T>(homePath: string, fn: () => T): T {
+  const previousHome = process.env.HOME;
+  process.env.HOME = homePath;
+
+  try {
+    return fn();
+  } finally {
+    process.env.HOME = previousHome;
+  }
+}
+
 // -- parseFrontmatter ---------------------------------------------------------
 
 describe("parseFrontmatter()", () => {
@@ -283,6 +294,31 @@ describe("loadAllSkills()", () => {
     }
   });
 
+  it("should mark skills as disabled for relative -path entries based on agent settings directory", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "skill-home-"));
+
+    try {
+      withTemporaryHome(tmpDir, () => {
+        const agentSkillsDir = path.join(tmpDir, ".pi", "agent", "skills");
+        const skillDir = path.join(agentSkillsDir, "my-skill");
+        fs.mkdirSync(skillDir, { recursive: true });
+        fs.writeFileSync(
+          path.join(skillDir, "SKILL.md"),
+          "---\nname: my-skill\ndescription: Test\n---\n"
+        );
+
+        const settings: Settings = {
+          skills: ["-skills/my-skill"],
+        };
+
+        const { byName } = loadAllSkills(settings, [agentSkillsDir]);
+        expect(byName.get("my-skill")?.mode).toBe(DisableMode.Disabled);
+      });
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
   it("should mark skills as hidden when frontmatter has disable-model-invocation", () => {
     const { tmpDir, userSkillsDir } = makeTmpDir();
     try {
@@ -335,6 +371,52 @@ describe("loadAllSkills()", () => {
       const skill = byName.get("token-skill");
 
       expect(skill?.tokens).toBeGreaterThan(0);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("should discover skills from explicit settings paths", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "skill-explicit-"));
+
+    try {
+      const explicitDir = path.join(tmpDir, "custom-skills");
+      const skillDir = path.join(explicitDir, "explicit-skill");
+      fs.mkdirSync(skillDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(skillDir, "SKILL.md"),
+        "---\nname: explicit-skill\ndescription: Explicit path skill\n---\n"
+      );
+
+      const settings: Settings = {
+        skills: [explicitDir],
+      };
+
+      const { byName } = loadAllSkills(settings, []);
+      expect(byName.get("explicit-skill")).toBeDefined();
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("should discover skills from configured package paths", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "skill-package-"));
+
+    try {
+      const packageDir = path.join(tmpDir, "pkg-skill-source");
+      const skillDir = path.join(packageDir, "skills", "pkg-skill");
+      fs.mkdirSync(skillDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(skillDir, "SKILL.md"),
+        "---\nname: pkg-skill\ndescription: Package-provided skill\n---\n"
+      );
+
+      const settings: Settings = {
+        packages: [packageDir],
+      };
+
+      const { byName } = loadAllSkills(settings, []);
+      expect(byName.get("pkg-skill")).toBeDefined();
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

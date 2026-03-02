@@ -73,8 +73,3 @@ export interface Settings {
   packages?: unknown[];
   [key: string]: unknown;
 }
-
-export interface SkillToggleResult {
-  applied: boolean;
-  changes: Map<string, DisableMode>;
-}

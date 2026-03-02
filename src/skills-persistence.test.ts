@@ -227,6 +227,39 @@ describe("applyChanges()", () => {
     }
   });
 
+  it("should remove relative -path entries based on the settings file directory", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "apply-relative-"));
+
+    try {
+      const settingsDir = path.join(tmpDir, "agent");
+      const settingsPath = path.join(settingsDir, "settings.json");
+      const skillDir = path.join(settingsDir, "skills", "my-skill");
+      const skillPath = path.join(skillDir, "SKILL.md");
+
+      fs.mkdirSync(skillDir, { recursive: true });
+      fs.writeFileSync(
+        skillPath,
+        "---\nname: my-skill\ndescription: test\n---\n"
+      );
+
+      saveSettings({ skills: ["-skills/my-skill"] }, settingsPath);
+
+      const skill = makeSkill("my-skill", skillPath);
+      const byName = new Map([["my-skill", skill]]);
+      const changes = new Map<string, DisableMode>([
+        ["my-skill", DisableMode.Enabled],
+      ]);
+
+      applyChanges(changes, byName, settingsPath);
+
+      const settings = loadSettings(settingsPath);
+      const disableEntries = settings.skills?.filter(isDisableEntry);
+      expect(disableEntries).toHaveLength(0);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
   it("should set disable-model-invocation in frontmatter when hiding", () => {
     const { tmpDir, settingsPath } = makeTmpSettings();
     try {
@@ -274,6 +307,28 @@ describe("applyChanges()", () => {
 
       const content = fs.readFileSync(skillPath, "utf8");
       expect(content).not.toContain("disable-model-invocation");
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("should throw and preserve settings when frontmatter update fails", () => {
+    const { tmpDir, settingsPath } = makeTmpSettings();
+    try {
+      const baseline: Settings = { skills: ["keep-this-entry"] };
+      saveSettings(baseline, settingsPath);
+
+      const missingSkillPath = path.join(tmpDir, "missing", "SKILL.md");
+      const skill = makeSkill("missing-skill", missingSkillPath);
+      const byName = new Map([["missing-skill", skill]]);
+      const changes = new Map<string, DisableMode>([
+        ["missing-skill", DisableMode.Hidden],
+      ]);
+
+      expect(() => applyChanges(changes, byName, settingsPath)).toThrow(
+        /Failed to update skill frontmatter/
+      );
+      expect(loadSettings(settingsPath)).toStrictEqual(baseline);
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
