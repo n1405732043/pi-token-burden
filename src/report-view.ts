@@ -306,7 +306,7 @@ class BudgetOverlay {
   private contextWindow: number | undefined;
   private readonly discoveredSkills: SkillInfo[];
   private done: (value: null) => void;
-  private onToggleResult?: (result: SkillToggleResult) => void;
+  private onToggleResult?: (result: SkillToggleResult) => boolean;
 
   private cachedWidth?: number;
   private cachedLines?: string[];
@@ -316,7 +316,7 @@ class BudgetOverlay {
     contextWindow: number | undefined,
     discoveredSkills: SkillInfo[],
     done: (value: null) => void,
-    onToggleResult?: (result: SkillToggleResult) => void
+    onToggleResult?: (result: SkillToggleResult) => boolean
   ) {
     this.parsed = parsed;
     this.originalParsed = {
@@ -422,16 +422,19 @@ class BudgetOverlay {
   }
 
   private moveSelection(delta: number): void {
-    const items = this.getVisibleItems();
-    if (items.length === 0) {
+    const itemCount =
+      this.state.mode === "skill-toggle"
+        ? this.getFilteredSkills().length
+        : this.getVisibleItems().length;
+    if (itemCount === 0) {
       return;
     }
 
     let next = this.state.selectedIndex + delta;
     if (next < 0) {
-      next = items.length - 1;
+      next = itemCount - 1;
     }
-    if (next >= items.length) {
+    if (next >= itemCount) {
       next = 0;
     }
     this.state.selectedIndex = next;
@@ -658,13 +661,17 @@ class BudgetOverlay {
       return;
     }
 
-    this.onToggleResult?.({
-      applied: true,
-      changes: new Map(this.state.pendingChanges),
-    });
+    const success =
+      this.onToggleResult?.({
+        applied: true,
+        changes: new Map(this.state.pendingChanges),
+      }) ?? true;
 
-    this.state.pendingChanges = new Map();
-    this.state.confirmingDiscard = false;
+    if (success) {
+      this.state.pendingChanges = new Map();
+      this.state.confirmingDiscard = false;
+    }
+
     this.invalidate();
   }
 
@@ -932,7 +939,7 @@ export async function showReport(
   contextWindow: number | undefined,
   ctx: ExtensionCommandContext,
   discoveredSkills?: SkillInfo[],
-  onToggleResult?: (result: SkillToggleResult) => void
+  onToggleResult?: (result: SkillToggleResult) => boolean
 ): Promise<void> {
   await ctx.ui.custom<null>(
     (tui, _theme, _kb, done) => {

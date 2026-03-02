@@ -228,6 +228,51 @@ describe("scanSkillDir()", () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it("should discover root-level *.md files when includeRootFiles is true", () => {
+    const tmpDir = makeTmpDir();
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, "my-root-skill.md"),
+        "---\nname: root-skill\ndescription: A root-level skill\n---\n# Root Skill"
+      );
+
+      const skills: {
+        name: string;
+        description: string;
+        filePath: string;
+        disableModelInvocation: boolean;
+      }[] = [];
+      scanSkillDir(tmpDir, skills, new Set(), undefined, true);
+
+      expect(skills).toHaveLength(1);
+      expect(skills[0].name).toBe("root-skill");
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("should not discover root-level *.md files when includeRootFiles is false", () => {
+    const tmpDir = makeTmpDir();
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, "my-root-skill.md"),
+        "---\nname: root-skill\ndescription: A root-level skill\n---\n# Root Skill"
+      );
+
+      const skills: {
+        name: string;
+        description: string;
+        filePath: string;
+        disableModelInvocation: boolean;
+      }[] = [];
+      scanSkillDir(tmpDir, skills, new Set(), undefined, false);
+
+      expect(skills).toHaveLength(0);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
 
 // -- loadAllSkills ------------------------------------------------------------

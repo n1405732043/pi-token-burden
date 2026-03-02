@@ -124,7 +124,8 @@ export function scanSkillDir(
   dir: string,
   skills: RawSkill[],
   visitedRealPaths: Set<string>,
-  visitedDirs?: Set<string>
+  visitedDirs?: Set<string>,
+  includeRootFiles?: boolean
 ): void {
   if (!fs.existsSync(dir)) {
     return;
@@ -167,9 +168,14 @@ export function scanSkillDir(
       }
 
       if (isDirectory) {
-        scanSkillDir(entryPath, skills, visitedRealPaths, visited);
-      } else if (isFile && entry.name === "SKILL.md") {
-        loadRawSkill(entryPath, skills, visitedRealPaths);
+        scanSkillDir(entryPath, skills, visitedRealPaths, visited, false);
+      } else if (isFile) {
+        const isRootMd =
+          (includeRootFiles ?? false) && entry.name.endsWith(".md");
+        const isSkillMd = !includeRootFiles && entry.name === "SKILL.md";
+        if (isRootMd || isSkillMd) {
+          loadRawSkill(entryPath, skills, visitedRealPaths);
+        }
       }
     }
   } catch {
@@ -189,7 +195,7 @@ function scanSkillPath(
   try {
     const stats = fs.statSync(sourcePath);
     if (stats.isDirectory()) {
-      scanSkillDir(sourcePath, skills, visitedRealPaths);
+      scanSkillDir(sourcePath, skills, visitedRealPaths, undefined, true);
       return;
     }
 

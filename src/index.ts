@@ -9,7 +9,24 @@ import { showReport } from "./report-view.js";
 import { applyChanges, loadSettings } from "./skills-persistence.js";
 import { loadAllSkills } from "./skills.js";
 
-const SETTINGS_PATH = path.join(os.homedir(), ".pi", "agent", "settings.json");
+/**
+ * Resolve the agent directory, matching pi's own resolution logic:
+ * 1. Check PI_CODING_AGENT_DIR environment variable
+ * 2. Fall back to ~/.pi/agent
+ */
+function getAgentDir(): string {
+  const envDir = process.env.PI_CODING_AGENT_DIR;
+  if (envDir) {
+    if (envDir === "~") {
+      return os.homedir();
+    }
+    if (envDir.startsWith("~/")) {
+      return path.join(os.homedir(), envDir.slice(2));
+    }
+    return envDir;
+  }
+  return path.join(os.homedir(), ".pi", "agent");
+}
 
 const extension: ExtensionFactory = (pi) => {
   pi.registerCommand("token-burden", {
@@ -25,44 +42,49 @@ const extension: ExtensionFactory = (pi) => {
         return;
       }
 
-      const settings = loadSettings(SETTINGS_PATH);
-      const { skills, byName } = loadAllSkills(settings);
+      const agentDir = getAgentDir();
+      const settingsPath = path.join(agentDir, "settings.json");
+      const settings = loadSettings(settingsPath);
+      const { skills, byName } = loadAllSkills(settings, undefined, agentDir);
 
       await showReport(parsed, contextWindow, ctx, skills, (result) => {
-        if (result.applied && result.changes.size > 0) {
-          try {
-            applyChanges(result.changes, byName, SETTINGS_PATH);
+        if (!result.applied || result.changes.size === 0) {
+          return true;
+        }
 
-            const parts: string[] = [];
-            const enabledCount = [...result.changes.values()].filter(
-              (v) => v === DisableMode.Enabled
-            ).length;
-            const hiddenCount = [...result.changes.values()].filter(
-              (v) => v === DisableMode.Hidden
-            ).length;
-            const disabledCount = [...result.changes.values()].filter(
-              (v) => v === DisableMode.Disabled
-            ).length;
+        try {
+          applyChanges(result.changes, byName, settingsPath, agentDir);
 
-            if (enabledCount > 0) {
-              parts.push(`${enabledCount} enabled`);
-            }
-            if (hiddenCount > 0) {
-              parts.push(`${hiddenCount} hidden`);
-            }
-            if (disabledCount > 0) {
-              parts.push(`${disabledCount} disabled`);
-            }
+          const parts: string[] = [];
+          const enabledCount = [...result.changes.values()].filter(
+            (v) => v === DisableMode.Enabled
+          ).length;
+          const hiddenCount = [...result.changes.values()].filter(
+            (v) => v === DisableMode.Hidden
+          ).length;
+          const disabledCount = [...result.changes.values()].filter(
+            (v) => v === DisableMode.Disabled
+          ).length;
 
-            ctx.ui.notify(
-              `Skills updated: ${parts.join(", ")}. Use /reload or restart for changes to take effect.`,
-              "info"
-            );
-          } catch (error) {
-            const msg =
-              error instanceof Error ? error.message : "Unknown error";
-            ctx.ui.notify(`Failed to save settings: ${msg}`, "error");
+          if (enabledCount > 0) {
+            parts.push(`${enabledCount} enabled`);
           }
+          if (hiddenCount > 0) {
+            parts.push(`${hiddenCount} hidden`);
+          }
+          if (disabledCount > 0) {
+            parts.push(`${disabledCount} disabled`);
+          }
+
+          ctx.ui.notify(
+            `Skills updated: ${parts.join(", ")}. Use /reload or restart for changes to take effect.`,
+            "info"
+          );
+          return true;
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : "Unknown error";
+          ctx.ui.notify(`Failed to save settings: ${msg}`, "error");
+          return false;
         }
       });
     },
