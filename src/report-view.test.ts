@@ -1,4 +1,4 @@
-import { showReport, buildTableItems } from "./report-view.js";
+import { getEditor, showReport, buildTableItems } from "./report-view.js";
 import type { ParsedPrompt } from "./types.js";
 
 describe("report-view", () => {
@@ -138,5 +138,55 @@ describe("buildTableItems — table items", () => {
     const labels = items.map((i) => i.label);
 
     expect(labels).toStrictEqual(["Large", "Medium", "Small"]);
+  });
+});
+
+describe(getEditor, () => {
+  function withEnv(
+    env: { VISUAL?: string; EDITOR?: string },
+    fn: () => void
+  ): void {
+    const savedVisual = process.env.VISUAL;
+    const savedEditor = process.env.EDITOR;
+    try {
+      if ("VISUAL" in env) {
+        process.env.VISUAL = env.VISUAL;
+      } else {
+        delete process.env.VISUAL;
+      }
+      if ("EDITOR" in env) {
+        process.env.EDITOR = env.EDITOR;
+      } else {
+        delete process.env.EDITOR;
+      }
+      fn();
+    } finally {
+      process.env.VISUAL = savedVisual;
+      process.env.EDITOR = savedEditor;
+    }
+  }
+
+  it("should prefer $VISUAL over $EDITOR", () => {
+    withEnv({ VISUAL: "code", EDITOR: "vim" }, () => {
+      expect(getEditor()).toBe("code");
+    });
+  });
+
+  it("should fall back to $EDITOR when $VISUAL is unset", () => {
+    withEnv({ EDITOR: "nano" }, () => {
+      expect(getEditor()).toBe("nano");
+    });
+  });
+
+  it("should fall back to vi when both are unset", () => {
+    withEnv({}, () => {
+      expect(getEditor()).toBe("vi");
+    });
+  });
+
+  it("should skip empty string $VISUAL", () => {
+    withEnv({ VISUAL: "", EDITOR: "nano" }, () => {
+      expect(getEditor()).toBe("nano");
+    });
   });
 });
