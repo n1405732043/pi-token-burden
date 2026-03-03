@@ -9,6 +9,63 @@
 
 - Replace heuristic with BPE tokenization via gpt-tokenizer ([6366044](https://github.com/Whamp/pi-token-burden/commit/6366044))
 - Replace heuristic with BPE tokenization via gpt-tokenizer ([#1](https://github.com/Whamp/pi-token-burden/pull/1))
+- Add skill toggle types and fast-check dependency ([876b334](https://github.com/Whamp/pi-token-burden/commit/876b334))
+- Add skill discovery module with filesystem scanning ([7fddba3](https://github.com/Whamp/pi-token-burden/commit/7fddba3))
+- Add skill persistence module with settings and frontmatter support ([ad9f3b2](https://github.com/Whamp/pi-token-burden/commit/ad9f3b2))
+- Add skill-toggle mode to BudgetOverlay ([80182cb](https://github.com/Whamp/pi-token-burden/commit/80182cb))
+- Wire skill discovery into /token-burden command ([bdd19b6](https://github.com/Whamp/pi-token-burden/commit/bdd19b6))
+- Add tmux e2e harness, vitest e2e config, and test:e2e script ([250e904](https://github.com/Whamp/pi-token-burden/commit/250e904))
+- E2e TUI tests via tmux (#skill-toggle) ([86e7aaa](https://github.com/Whamp/pi-token-burden/commit/86e7aaa))
+- Add getEditor() helper ([83147ea](https://github.com/Whamp/pi-token-burden/commit/83147ea))
+- Open skill in editor with 'e' key in skill-toggle mode ([f755f1f](https://github.com/Whamp/pi-token-burden/commit/f755f1f))
+- Support 'e' to edit AGENTS.md files in drilldown mode ([8c89ace](https://github.com/Whamp/pi-token-burden/commit/8c89ace))
+
+### 🩹 Fixes
+
+- **ci:** Specify pnpm version in package.json and ignore scripts dir ([1237674](https://github.com/Whamp/pi-token-burden/commit/1237674))
+- **ci:** Ignore gpt-tokenizer in knip and fix gitleaks path ([8b32b66](https://github.com/Whamp/pi-token-burden/commit/8b32b66))
+- Resolve disable paths from settings base dir, add rollback and package discovery ([b0bac61](https://github.com/Whamp/pi-token-burden/commit/b0bac61))
+- Address code review findings (P1 nav bounds, P2 persistence/settings/scan) ([4409611](https://github.com/Whamp/pi-token-burden/commit/4409611))
+- Update skill modes after successful save to prevent UI snap-back ([be38683](https://github.com/Whamp/pi-token-burden/commit/be38683))
+- Scope lint ignore to src/e2e/ instead of all test files ([091eb58](https://github.com/Whamp/pi-token-burden/commit/091eb58))
+
+### 📖 Documentation
+
+- Add skill toggle integration plan ([3a4ac1a](https://github.com/Whamp/pi-token-burden/commit/3a4ac1a))
+- Add e2e TUI tests implementation plan ([2b6df7e](https://github.com/Whamp/pi-token-burden/commit/2b6df7e))
+- Update AGENTS.md with e2e test commands and file map ([bcb86bf](https://github.com/Whamp/pi-token-burden/commit/bcb86bf))
+- Add open-skill-in-editor implementation plan ([8128dca](https://github.com/Whamp/pi-token-burden/commit/8128dca))
+
+### 📦 Build
+
+- Move gpt-tokenizer to dependencies ([f1120e5](https://github.com/Whamp/pi-token-burden/commit/f1120e5))
+
+### 🏡 Chore
+
+- Migrate agent memory from .gcc to .memory ([d6c96b4](https://github.com/Whamp/pi-token-burden/commit/d6c96b4))
+- Update memory state ([de7676e](https://github.com/Whamp/pi-token-burden/commit/de7676e))
+
+### ✅ Tests
+
+- Update estimateTokens tests for BPE tokenization ([0d861fc](https://github.com/Whamp/pi-token-burden/commit/0d861fc))
+- Relax totalTokens assertion to work with BPE ([974756b](https://github.com/Whamp/pi-token-burden/commit/974756b))
+- Add e2e overlay rendering and navigation tests ([7fa96e7](https://github.com/Whamp/pi-token-burden/commit/7fa96e7))
+- Add e2e skill-toggle mode tests ([9e9a969](https://github.com/Whamp/pi-token-burden/commit/9e9a969))
+- Add failing tests for getEditor() ([f5a0d23](https://github.com/Whamp/pi-token-burden/commit/f5a0d23))
+- Add e2e tests for open-skill-in-editor ([8336717](https://github.com/Whamp/pi-token-burden/commit/8336717))
+
+### ❤️ Contributors
+
+- Will Hampson <will@ggl.slmail.me>
+
+## v0.1.3...main
+
+[compare changes](https://github.com/Whamp/pi-token-burden/compare/v0.1.3...main)
+
+### 🚀 Enhancements
+
+- Replace heuristic with BPE tokenization via gpt-tokenizer ([6366044](https://github.com/Whamp/pi-token-burden/commit/6366044))
+- Replace heuristic with BPE tokenization via gpt-tokenizer ([#1](https://github.com/Whamp/pi-token-burden/pull/1))
 
 ### 🩹 Fixes
 
