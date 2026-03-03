@@ -141,7 +141,7 @@ describe("buildTableItems — table items", () => {
   });
 });
 
-describe(getEditor, () => {
+describe("getEditor — editor resolution", () => {
   function withEnv(
     env: { VISUAL?: string; EDITOR?: string },
     fn: () => void

@@ -1,9 +1,12 @@
+import { spawnSync } from "node:child_process";
+
 import type { ExtensionCommandContext } from "@mariozechner/pi-coding-agent";
 import {
   matchesKey,
   truncateToWidth,
   visibleWidth,
 } from "@mariozechner/pi-tui";
+import type { TUI } from "@mariozechner/pi-tui";
 
 import { DisableMode } from "./enums.js";
 import type {
@@ -310,6 +313,7 @@ class BudgetOverlay {
   private adjustedTotalTokens: number;
   private contextWindow: number | undefined;
   private readonly discoveredSkills: SkillInfo[];
+  private readonly tui: TUI;
   private done: (value: null) => void;
   private onToggleResult?: (result: SkillToggleResult) => boolean;
 
@@ -317,12 +321,14 @@ class BudgetOverlay {
   private cachedLines?: string[];
 
   constructor(
+    tui: TUI,
     parsed: ParsedPrompt,
     contextWindow: number | undefined,
     discoveredSkills: SkillInfo[],
     done: (value: null) => void,
     onToggleResult?: (result: SkillToggleResult) => boolean
   ) {
+    this.tui = tui;
     this.parsed = parsed;
     this.originalParsed = {
       ...parsed,
@@ -561,6 +567,11 @@ class BudgetOverlay {
       return;
     }
 
+    if (data === "e") {
+      this.openSkillInEditor();
+      return;
+    }
+
     if (data === "/") {
       this.state.searchActive = true;
       this.state.searchQuery = "";
@@ -695,6 +706,28 @@ class BudgetOverlay {
     }
 
     this.invalidate();
+  }
+
+  private openSkillInEditor(): void {
+    const visibleSkills = this.getFilteredSkills();
+    const skill = visibleSkills[this.state.selectedIndex];
+    if (!skill?.filePath) {
+      return;
+    }
+
+    const editorCmd = getEditor();
+    const [editor, ...editorArgs] = editorCmd.split(" ");
+
+    this.tui.stop();
+
+    try {
+      spawnSync(editor, [...editorArgs, skill.filePath], {
+        stdio: "inherit",
+      });
+    } finally {
+      this.tui.start();
+      this.tui.requestRender(true);
+    }
   }
 
   private getFilteredSkills(): SkillInfo[] {
@@ -875,7 +908,7 @@ class BudgetOverlay {
 
     let hints: string;
     if (this.state.mode === "skill-toggle") {
-      hints = `${italic("↑↓")} navigate  ${italic("enter")} cycle state  ${italic("/")} search  ${italic("ctrl+s")} save  ${italic("esc")} back`;
+      hints = `${italic("↑↓")} navigate  ${italic("enter")} cycle state  ${italic("e")} edit  ${italic("/")} search  ${italic("ctrl+s")} save  ${italic("esc")} back`;
     } else if (this.state.mode === "drilldown") {
       hints = `${italic("↑↓")} navigate  ${italic("/")} search  ${italic("esc")} back`;
     } else {
@@ -966,6 +999,7 @@ export async function showReport(
   await ctx.ui.custom<null>(
     (tui, _theme, _kb, done) => {
       const overlay = new BudgetOverlay(
+        tui,
         parsed,
         contextWindow,
         discoveredSkills ?? [],
