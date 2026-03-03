@@ -96,6 +96,11 @@ function shortenLabel(label: string): string {
   return truncateToWidth(label, 10, "…");
 }
 
+/** Resolve the user's preferred editor: $VISUAL → $EDITOR → vi. */
+export function getEditor(): string {
+  return process.env.VISUAL || process.env.EDITOR || "vi";
+}
+
 // ---------------------------------------------------------------------------
 // Data preparation
 // ---------------------------------------------------------------------------
