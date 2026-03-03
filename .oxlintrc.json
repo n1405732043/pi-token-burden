@@ -7,7 +7,7 @@
     "vendor/",
     "scripts/",
     ".memory/",
-    "**/*.test.ts"
+    "src/e2e/**"
   ],
   "jsPlugins": [
     { "name": "@factory", "specifier": "./vendor/factory-rules/plugin.cjs" }

@@ -85,6 +85,6 @@ describe("overlay rendering", () => {
     sleepMs(500);
     const lines = harness.capture();
     const stillOpen = lines.some((l) => l.includes("Token Burden"));
-    expect(stillOpen).toBe(false);
+    expect(stillOpen).toBeFalsy();
   });
 });
